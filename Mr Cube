@@ -1,0 +1,246 @@
+#pgzero
+import random, time
+
+floor = Actor("floor")
+wall = Actor("wall")
+leveron = Actor("leveron")
+leveroff = Actor("leveroff")
+cube = Actor("cube")
+size_w = 9
+size_h = 10
+WIDTH = floor.width * size_w
+HEIGHT = floor.height * size_h
+money = 1
+guide = True
+rounds = 0
+killed_enemy = 0
+
+TITLE = "WeCode и Драконы"
+FPS = 30
+
+lvl_1 = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0],
+    [0, 1, 1, 0, 0, 1, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 0, 1, 0],
+    [0, 1, 0, 0, 0, 1, 0, 1, 0],
+    [0, 1, 0, 1, 1, 1, 0, 1, 0],
+    [0, 1, 0, 0, 0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 0, 2, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+]
+
+lvl_2 = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 0, 1, 1, 0],
+    [0, 1, 1, 0, 1, 0, 1, 1, 0],
+    [0, 1, 1, 0, 1, 1, 1, 1, 0],
+    [0, 1, 1, 0, 0, 0, 0, 4, 0],
+    [0, 1, 1, 1, 1, 1, 0, 1, 0],
+    [0, 1, 1, 0, 0, 1, 0, 1, 0],
+    [0, 1, 1, 0, 1, 1, 0, 2, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+]
+
+lvl_3 = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 0, 1, 1, 0],
+    [0, 1, 1, 0, 1, 0, 1, 1, 0],
+    [0, 1, 1, 0, 1, 4, 1, 1, 0],
+    [0, 1, 1, 0, 4, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1, 1, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 0, 1, 0],
+    [0, 2, 1, 1, 1, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+]
+
+lvl_4 = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 4, 1, 1, 0],
+    [0, 1, 1, 0, 4, 0, 1, 1, 0],
+    [0, 1, 1, 0, 1, 0, 1, 1, 0],
+    [0, 2, 0, 0, 1, 0, 0, 1, 0],
+    [0, 0, 0, 1, 1, 1, 0, 1, 0],
+    [0, 1, 1, 1, 0, 1, 0, 1, 0],
+    [0, 1, 1, 1, 0, 1, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0]
+]
+
+lvl = lvl_1
+
+hero = Actor("hero")
+hero.left = 3 * floor.width
+hero.top = 3 * floor.height
+hero.hp = 100
+hero.attack = 20
+
+gloves_list = []
+gloves_see = False
+mode = "guide"
+
+enemies = []
+def generate_enemy():
+    for i in range(2):
+        enemy = Actor("enemy")
+        x = random.randint(1, 7)
+        y = random.randint(1, 7)
+        while True:
+            x = random.randint(1, 7)
+            y = random.randint(1, 7)
+            if lvl[y][x] != 0 and lvl[y][x] != 4:
+                break
+        enemy.left = x * floor.width
+        enemy.top =  y * floor.height
+        enemy.hp = random.randint(30, 43)
+        enemy.attack = random.randint(3, 5)
+        enemy.bonus = random.randint(1, 1)
+        enemies.append(enemy)
+
+steps = []
+step_delay = 1
+def create_step():
+    step = Actor("hero_step")
+    step.pos = hero.pos
+    step.time = time.time()
+    steps.append(step)
+
+generate_enemy()
+
+def map_draw():
+    for y in range(len(lvl)):
+        for x in range(len(lvl[y])):
+            block = lvl[y][x]
+            if block == 1:
+                floor.left = floor.width * x
+                floor.top = floor.height * y
+                floor.draw()
+            elif block == 0:
+                wall.left = wall.width * x
+                wall.top = wall.height * y
+                wall.draw()
+            elif block == 2:
+                leveroff.left = leveroff.width * x
+                leveroff.top = leveroff.height * y
+                leveroff.draw()
+            elif block == 4:
+                cube.left = cube.width * x
+                cube.top = cube.height * y
+                cube.draw()
+
+def draw():
+    screen.fill("#05080d")
+    if mode == "game":
+        map_draw()
+        screen.draw.text("HP: " , center=(35, 475))
+        screen.draw.text(hero.hp, center=(85, 475))
+        screen.draw.text("Раунды: ", center=(380, 30), fontsize=14)
+        screen.draw.text(rounds, center=(430, 30), color="yellow", fontsize=14)
+        if guide:
+            screen.draw.text("Нажмите R для использования перчатки", center=(140, 20), color="yellow", fontsize=14)
+        screen.draw.text("Монеты: " , center=(380, 10), fontsize=14)
+        screen.draw.text(money , center=(430, 10), color="green", fontsize=14)
+        for enemy in enemies:
+            enemy.draw()
+        for gloves in gloves_list:
+            gloves.draw()
+        for step in steps:
+            step.draw()
+        hero.draw()
+    elif mode == "end":
+        screen.draw.text("Конец😐", center=(WIDTH/2,HEIGHT/2), color="#c70000", fontsize=24)
+        screen.draw.text("Раундов пройдено: ", center=(WIDTH/2,HEIGHT/2+30), fontsize=24)
+        screen.draw.text(rounds, center=(WIDTH/2+120,HEIGHT/2+30), color="yellow", fontsize=24)
+        screen.draw.text("Врагов убито: ", center=(WIDTH/2,HEIGHT/2+60), fontsize=24)
+        screen.draw.text(killed_enemy, center=(WIDTH/2+90,HEIGHT/2+60), color="red", fontsize=24)
+    elif mode == "guide":
+        screen.draw.text("Добро пожаловать в", center=(WIDTH/2-60,HEIGHT/2), color="white", fontsize=24)
+        screen.draw.text("Mr Cube", center=(WIDTH/2+110,HEIGHT/2), color="#c70000", fontsize=24)
+        screen.draw.text("Вам нужно:", center=(WIDTH/2,HEIGHT/2+30), color="yellow", fontsize=14)
+        screen.draw.text("Уничтожать врагов и решать головоломки", center=(WIDTH/2,HEIGHT/2+50), color="yellow", fontsize=14)
+        screen.draw.text("Сначала уничтожте врагов,потом активируйте рычаги!", center=(WIDTH/2,HEIGHT/2+70), color="red", fontsize=14)
+        screen.draw.text("Нажмите Enter для продолжения", center=(WIDTH/2,HEIGHT/2+90), color="green", fontsize=14)
+
+def update(dt):
+    global mode, money, rounds, lvl
+    if enemies == [] and hero.hp > 0 and leveroff.image == "leveron":
+        rounds += 1
+        money += 1
+        leveroff.image = "leveroff"
+        if lvl == lvl_1:
+            lvl = lvl_2
+        elif lvl ==  lvl_2:
+            lvl = lvl_3
+        elif lvl ==  lvl_3:
+            lvl = lvl_4
+        generate_enemy()
+    elif hero.hp <= 0:
+        mode = "end"
+    for step in steps:
+        if time.time()-step.time>step_delay:
+            steps.remove(step)
+
+def on_key_down(key):
+    global money, guide, killed_enemy, lvl, gloves_see, gloves, mode
+    old_x = hero.x
+    old_y = hero.y
+    if keyboard.right or keyboard.d:
+        hero.left += floor.width
+    elif keyboard.left or keyboard.a:
+        hero.left -= floor.width
+    elif keyboard.up or keyboard.w:
+        hero.top -= floor.width
+    elif keyboard.down or keyboard.s:
+        hero.top += floor.width
+    elif keyboard.enter and mode == "guide":
+        mode = "game"
+    elif keyboard.r and gloves_see:
+        for enemy in enemies:
+            enemy.angle = +7
+            animate(enemy, duration=0.2, angle=0)
+            enemy.hp -= 10
+        for gloves in gloves_list:
+            gloves.pos = (485, 475)
+            gloves_see = False
+        guide = False
+        for y in range(len(lvl)):
+            for x in range(len(lvl[y])):
+                if lvl[y][x] == 4:
+                    lvl[y][x] = 1
+
+    x = int(hero.left // 50)
+    y = int(hero.top // 50)
+    if lvl[y][x] == 0 or lvl[y][x] == 4:
+        hero.x = old_x
+        hero.y = old_y
+    create_step()
+    index = hero.collidelist(enemies)
+    if index != -1:
+        enemy = enemies[index]
+        hero.x = old_x
+        hero.y = old_y
+        enemy.hp -= hero.attack
+        enemy.angle = +7
+        animate(enemy, duration=0.2, angle=0)
+        if enemy.hp <= 0:
+            if enemy.bonus == 1:
+                gloves = Actor("gloves")
+                gloves.pos = enemy.pos
+                gloves_list.append(gloves)
+            money += 1
+            killed_enemy += 1
+            enemies.pop(index)
+        else:
+            hero.hp -= enemy.attack
+                
+    index = hero.collidelist(gloves_list)
+    if index != -1:
+        if hero.hp < 90:
+            hero.hp += 10
+        else:
+            hero.hp = 100
+        gloves = gloves_list[index]
+        gloves.pos = (425, 475)
+        gloves_see = True
+    index = hero.colliderect(leveroff)
+    if index == 1:
+        leveroff.image = "leveron"
