@@ -33,4 +33,4 @@ async def test(ctx):
     await ctx.send('Working!', file=discord.File('Meme1.png'))
 
 
-client.run("MTIxMTAxMTIyMTcwMTAwOTUwOQ.GzGaaT.jKlzwHENxO-F_Efus8iGBvkzxzi18noksvx6sM")
+client.run("")
